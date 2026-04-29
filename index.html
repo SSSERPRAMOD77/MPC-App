@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SafeShop MPC App</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; text-align: center; margin-top: 0; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn { background: #1a73e8; color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        .btn:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>MPC Master Entry</h2>
+        <form id="appForm">
+            <label>MPC Number</label><input type="text" name="mpc_number" required>
+            <label>Leader Name</label><input type="text" name="leader" required>
+            <label>Upline Name</label><input type="text" name="upline" required>
+            <label>Guest Name</label><input type="text" name="guest_name" required>
+            <label>600 Paid?</label>
+            <select name="paid"><option>Yes</option><option>No</option></select>
+            <label>DOJ</label><input type="date" name="doj" required>
+            <label>MPC Code</label><input type="text" name="mpc_code" required>
+            <label>Mobile</label><input type="tel" name="mobile" maxlength="10" required>
+            <label>City</label>
+            <select name="city">
+                <option>Chirawa</option><option>Churu</option><option>Jhunjhunu</option><option>Other</option>
+            </select>
+            <label>PAN Number</label><input type="text" name="pan" maxlength="10" style="text-transform:uppercase" required>
+            <label>Aadhar Number</label><input type="text" name="aadhar" maxlength="12" required>
+            <label>Sale (BV)</label><input type="number" name="bv" required>
+            <label>FIM Status</label>
+            <select name="fim"><option>Done</option><option>Pending</option></select>
+            
+            <button type="submit" class="btn" id="sBtn">Save Record</button>
+        </form>
+    </div>
+
+    <script>
+        const url = 'https://script.google.com/macros/s/AKfycbycBohdpvLyLAx_PAo1KKbGy7g04zfFza0VGQh3OTWnIyg-mO_eyJcgswQBld43vQcOZg/exec'; // REPLACE THIS WITH YOUR GOOGLE URL
+        const f = document.getElementById('appForm');
+        f.addEventListener('submit', e => {
+            e.preventDefault();
+            document.getElementById('sBtn').disabled = true;
+            document.getElementById('sBtn').innerText = "Saving...";
+            fetch(url, { method: 'POST', body: new FormData(f)})
+            .then(() => { alert("Saved!"); f.reset(); document.getElementById('sBtn').disabled = false; document.getElementById('sBtn').innerText = "Save Record"; })
+            .catch(() => { alert("Error!"); document.getElementById('sBtn').disabled = false; });
+        });
+    </script>
+</body>
+</html>
