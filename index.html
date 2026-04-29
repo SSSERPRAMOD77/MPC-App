@@ -1,28 +1,31 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeShop Smart App</title>
+    <title>SafeShop MPC Smart App</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        h2 { color: #1a73e8; text-align: center; margin-bottom: 20px; }
-        label { display: block; margin: 12px 0 5px; font-weight: bold; font-size: 14px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        h2 { color: #1a73e8; text-align: center; margin-bottom: 5px; }
+        .refresh-link { display: block; text-align: center; font-size: 12px; color: #1a73e8; cursor: pointer; margin-bottom: 20px; text-decoration: underline; }
+        label { display: block; margin: 12px 0 5px; font-weight: bold; font-size: 14px; color: #333; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff; }
         .btn { background: #1a73e8; color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-size: 18px; margin-top: 25px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>MPC Master Entry</h2>
+        <span class="refresh-link" onclick="loadMPCs()">Reload MPC List</span>
+        
         <form id="appForm">
             <label>Select MPC Number</label>
             <select name="mpc_number" id="mpc_select" onchange="autoFillCode()">
                 <option value="">Loading MPCs...</option>
             </select>
 
-            <label>MPC Code (Auto-fetched)</label>
+            <label>MPC Code</label>
             <input type="text" name="mpc_code" id="mpc_code_display" readonly style="background:#eee;">
 
             <label>Leader Name</label><input type="text" name="leader">
@@ -42,27 +45,30 @@
     </div>
 
     <script>
-        const url = 'https://script.google.com/macros/s/AKfycbwIKIk8z1YOYrERV_7uRdG307I7zNVmpoXHlyeU_S2pE1QNNgDbRJA16aSAybTBUsijMA/exec'; // PASTE NEW URL HERE
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwnMcpxRnSJ1ex1VDjkzELPNi6q9rWxotx0Dd3PVpguivv3J4xythe7TQPAUbahhHzyng/exec'; // <--- PUT NEW URL HERE
         let mpcData = [];
 
-        // 1. FETCH MPC LIST FROM SPREADSHEET ON LOAD
-        window.onload = function() {
-            fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                mpcData = data;
-                const select = document.getElementById('mpc_select');
-                select.innerHTML = '<option value="">-- Choose --</option>';
-                data.forEach(item => {
-                    let opt = document.createElement('option');
-                    opt.value = item.number;
-                    opt.innerHTML = item.number;
-                    select.appendChild(opt);
-                });
+        // Global function that Google Script will call
+        window.handleMPCData = function(data) {
+            mpcData = data;
+            const select = document.getElementById('mpc_select');
+            select.innerHTML = '<option value="">-- Choose --</option>';
+            data.forEach(item => {
+                let opt = document.createElement('option');
+                opt.value = item.number;
+                opt.innerText = item.number;
+                select.appendChild(opt);
             });
         };
 
-        // 2. AUTO-FILL CODE WHEN NUMBER IS SELECTED
+        function loadMPCs() {
+            const select = document.getElementById('mpc_select');
+            select.innerHTML = '<option value="">Connecting to Sheet...</option>';
+            const script = document.createElement('script');
+            script.src = scriptURL + "?action=getMPCs"; // Adding a param to avoid cache
+            document.body.appendChild(script);
+        }
+
         function autoFillCode() {
             const selectedNum = document.getElementById('mpc_select').value;
             const codeInput = document.getElementById('mpc_code_display');
@@ -70,15 +76,28 @@
             codeInput.value = found ? found.code : "";
         }
 
-        // 3. SUBMIT FORM
-        const f = document.getElementById('appForm');
-        f.addEventListener('submit', e => {
+        window.onload = loadMPCs;
+
+        // SUBMIT LOGIC
+        document.getElementById('appForm').addEventListener('submit', e => {
             e.preventDefault();
-            document.getElementById('sBtn').disabled = true;
-            document.getElementById('sBtn').innerText = "Saving...";
-            fetch(url, { method: 'POST', body: new FormData(f)})
-            .then(() => { alert("Saved!"); f.reset(); document.getElementById('sBtn').disabled = false; document.getElementById('sBtn').innerText = "Save Record"; })
-            .catch(() => { alert("Error!"); document.getElementById('sBtn').disabled = false; });
+            const btn = document.getElementById('sBtn');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+            
+            fetch(scriptURL, { method: 'POST', body: new FormData(e.target)})
+            .then(() => { 
+                alert("Data Sent Successfully!"); 
+                e.target.reset(); 
+                btn.disabled = false; 
+                btn.innerText = "Save Record";
+                loadMPCs(); // Refresh list after save
+            })
+            .catch(() => { 
+                alert("Check your Google Sheet. It might have saved despite this error message."); 
+                btn.disabled = false;
+                btn.innerText = "Save Record";
+            });
         });
     </script>
 </body>
