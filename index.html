@@ -1,84 +1,110 @@
  <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
+     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeShop Smart App v3</title>
+    <title>SafeShop MPC Exclusive</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        h2 { color: #1a73e8; text-align: center; margin-bottom: 5px; }
-        .refresh-link { display: block; text-align: center; font-size: 12px; color: #1a73e8; cursor: pointer; margin-bottom: 20px; text-decoration: underline; }
+        :root { --primary: #1a73e8; --gold: #D4AF37; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        h2 { color: var(--primary); text-align: center; margin-bottom: 5px; }
+        .reg-msg { text-align: center; font-size: 12px; color: #d93025; margin-bottom: 15px; font-weight: bold; }
         label { display: block; margin: 12px 0 5px; font-weight: bold; font-size: 14px; color: #333; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff; }
-        input:disabled { background: #eeeeee; cursor: not-allowed; }
-        .btn { background: #1a73e8; color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-size: 18px; margin-top: 25px; cursor: pointer; font-weight: bold; }
-        .hint { font-size: 11px; color: #666; font-weight: normal; margin-top: 2px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        input:disabled { background: #f9f9f9; }
+        .btn { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-size: 18px; margin-top: 25px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        
+        /* Congratulations Popup */
+        #successModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; text-align: center; color: white; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: #fff; color: #333; padding: 30px; border-radius: 20px; max-width: 400px; border-top: 10px solid var(--gold); }
+        .modal-content h1 { color: var(--gold); margin-top: 0; }
+        .mpc-reveal { font-size: 24px; font-weight: bold; color: var(--primary); background: #e8f0fe; padding: 10px; border-radius: 10px; margin: 15px 0; border: 2px dashed var(--primary); }
     </style>
 </head>
 <body>
+
+    <div id="successModal">
+        <div class="modal-content">
+            <h1>Congratulations!</h1>
+            <p>Registration Successful for SafeShop.</p>
+            <p>Your Exclusive MPC Code is:</p>
+            <div class="mpc-reveal" id="finalCode">----</div>
+            <button class="btn" onclick="closeModal()">Back to Home</button>
+        </div>
+    </div>
+
     <div class="card">
-        <h2>MPC Master Entry</h2>
-        <span class="refresh-link" onclick="loadMPCs()">Reload MPC List</span>
+        <h2>SafeShop Enrollment</h2>
+        <p class="reg-msg" id="lockMsg">Register below to unlock MPC Details</p>
         
         <form id="appForm">
+            <label>Guest Name *</label>
+            <input type="text" name="guest_name" id="gName" placeholder="Enter full name" required oninput="checkReg()">
+
             <label>Select MPC Number</label>
-            <select name="mpc_number" id="mpc_select" onchange="autoFillCode()">
-                <option value="">Loading MPCs...</option>
+            <select name="mpc_number" id="mpc_select" disabled onclick="alertIfLocked()">
+                <option value="">-- Locked --</option>
             </select>
 
-            <label>MPC Code</label>
-            <input type="text" name="mpc_code" id="mpc_code_display" readonly style="background:#eee;">
+            <!-- Hidden MPC Code field (will be sent to sheet but not seen by user) -->
+            <input type="hidden" name="mpc_code" id="hidden_mpc_code">
 
             <label>Leader Name</label><input type="text" name="leader">
             <label>Upline Name</label><input type="text" name="upline">
-            <label>Guest Name *</label><input type="text" name="guest_name" required>
             <label>600 Paid?</label><select name="paid"><option value="">--</option><option>Yes</option><option>No</option></select>
             <label>DOJ</label><input type="date" name="doj">
             <label>Mobile</label><input type="tel" name="mobile" maxlength="10">
             <label>City</label><input type="text" name="city">
             <label>PAN Number</label><input type="text" name="pan" maxlength="10" style="text-transform:uppercase">
             <label>Aadhar Number</label><input type="text" name="aadhar" maxlength="12">
-
-            <!-- New Logic Fields -->
+            
             <label>Log ID</label>
-            <input type="text" name="log_id" id="log_id_input" placeholder="Enter ID to unlock BV" oninput="toggleBV()">
+            <input type="text" name="log_id" id="log_id_input" placeholder="Optional" oninput="toggleBV()">
             
             <label>Sale (BV)</label>
-            <input type="number" name="bv" id="bv_input" disabled placeholder="Locked">
-            <p class="hint" id="bv_hint">Enter Log ID first to record BV</p>
+            <input type="number" name="bv" id="bv_input" disabled placeholder="Enter Log ID to record BV">
 
             <label>FIM Status</label><select name="fim"><option value="">--</option><option>Done</option><option>Pending</option></select>
             
-            <button type="submit" class="btn" id="sBtn">Save Record</button>
+            <button type="submit" class="btn" id="sBtn">Register Now</button>
         </form>
     </div>
 
     <script>
-        const scriptURL = ' https://script.google.com/macros/s/AKfycbwNSz1YEjBzU-SY7-KxxuM0kQ5gKoi0UnU2dbCPtcuw7cfdp3RVHeeeCkORqdLuiGCSLQ/exec'; 
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxheTZc-3fbNtEd96JGNnHTztFxQFhR1IHBAMJjgOWEQAhkUsY6iZRclati-9YNjYH_kA/exec';
         let mpcData = [];
+        let isRegistered = false;
 
-        function toggleBV() {
-            const logId = document.getElementById('log_id_input').value;
-            const bvInput = document.getElementById('bv_input');
-            const bvHint = document.getElementById('bv_hint');
+        // 1. Check if Guest name is being typed to unlock MPC Number
+        function checkReg() {
+            const name = document.getElementById('gName').value;
+            const select = document.getElementById('mpc_select');
+            const msg = document.getElementById('lockMsg');
             
-            if (logId.trim() !== "") {
-                bvInput.disabled = false;
-                bvInput.placeholder = "e.g. 200";
-                bvHint.style.display = "none";
+            if (name.length > 2) {
+                select.disabled = false;
+                msg.style.color = "green";
+                msg.innerText = "MPC Selection Unlocked";
+                isRegistered = true;
+                if(mpcData.length === 0) loadMPCs();
             } else {
-                bvInput.disabled = true;
-                bvInput.value = "";
-                bvInput.placeholder = "Locked";
-                bvHint.style.display = "block";
+                select.disabled = true;
+                msg.style.color = "#d93025";
+                msg.innerText = "Register below to unlock MPC Details";
+                isRegistered = false;
             }
         }
 
+        function alertIfLocked() {
+            if(!isRegistered) alert("Please enter the Guest Name first to register and see MPC Numbers.");
+        }
+
+        // 2. Load MPCs (JSONP Handshake)
         window.handleMPCData = function(data) {
             mpcData = data;
             const select = document.getElementById('mpc_select');
-            select.innerHTML = '<option value="">-- Choose --</option>';
+            select.innerHTML = '<option value="">-- Choose MPC Number --</option>';
             data.forEach(item => {
                 let opt = document.createElement('option');
                 opt.value = item.number;
@@ -88,42 +114,47 @@
         };
 
         function loadMPCs() {
-            const select = document.getElementById('mpc_select');
-            select.innerHTML = '<option value="">Connecting...</option>';
             const script = document.createElement('script');
             script.src = scriptURL + "?callback=handleMPCData&t=" + new Date().getTime();
             document.body.appendChild(script);
         }
 
-        function autoFillCode() {
-            const selectedNum = document.getElementById('mpc_select').value;
-            const codeInput = document.getElementById('mpc_code_display');
-            const found = mpcData.find(x => x.number === selectedNum);
-            codeInput.value = found ? found.code : "";
+        // 3. Logic for Log ID/BV
+        function toggleBV() {
+            const logId = document.getElementById('log_id_input').value;
+            const bvInput = document.getElementById('bv_input');
+            bvInput.disabled = (logId.trim() === "");
         }
 
-        window.onload = loadMPCs;
-
+        // 4. Form Submission
         document.getElementById('appForm').addEventListener('submit', e => {
             e.preventDefault();
             const btn = document.getElementById('sBtn');
+            const selectedNum = document.getElementById('mpc_select').value;
+            const found = mpcData.find(x => x.number === selectedNum);
+            
+            // Set the hidden MPC code before sending
+            const code = found ? found.code : "N/A";
+            document.getElementById('hidden_mpc_code').value = code;
+            document.getElementById('finalCode').innerText = code;
+
             btn.disabled = true;
-            btn.innerText = "Saving...";
+            btn.innerText = "Processing Registration...";
             
             fetch(scriptURL, { method: 'POST', body: new FormData(e.target)})
             .then(() => { 
-                alert("Saved Successfully!"); 
-                e.target.reset(); 
-                toggleBV(); // Re-lock BV
-                btn.disabled = false; 
-                btn.innerText = "Save Record";
-            })
-            .catch(() => { 
-                alert("Record Saved (Syncing...)"); 
+                document.getElementById('successModal').style.display = 'flex';
+                e.target.reset();
                 btn.disabled = false;
-                btn.innerText = "Save Record";
-            });
+                btn.innerText = "Register Now";
+                checkReg(); // Re-lock
+            })
+            .catch(() => alert("Error in saving. Check internet."));
         });
+
+        function closeModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
