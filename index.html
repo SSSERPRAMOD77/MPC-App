@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeShop MPC Smart App</title>
+    <title>SafeShop Smart App v3</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
@@ -11,7 +11,9 @@
         .refresh-link { display: block; text-align: center; font-size: 12px; color: #1a73e8; cursor: pointer; margin-bottom: 20px; text-decoration: underline; }
         label { display: block; margin: 12px 0 5px; font-weight: bold; font-size: 14px; color: #333; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff; }
+        input:disabled { background: #eeeeee; cursor: not-allowed; }
         .btn { background: #1a73e8; color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-size: 18px; margin-top: 25px; cursor: pointer; font-weight: bold; }
+        .hint { font-size: 11px; color: #666; font-weight: normal; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -37,7 +39,15 @@
             <label>City</label><input type="text" name="city">
             <label>PAN Number</label><input type="text" name="pan" maxlength="10" style="text-transform:uppercase">
             <label>Aadhar Number</label><input type="text" name="aadhar" maxlength="12">
-            <label>Sale (BV)</label><input type="number" name="bv">
+
+            <!-- New Logic Fields -->
+            <label>Log ID</label>
+            <input type="text" name="log_id" id="log_id_input" placeholder="Enter ID to unlock BV" oninput="toggleBV()">
+            
+            <label>Sale (BV)</label>
+            <input type="number" name="bv" id="bv_input" disabled placeholder="Locked">
+            <p class="hint" id="bv_hint">Enter Log ID first to record BV</p>
+
             <label>FIM Status</label><select name="fim"><option value="">--</option><option>Done</option><option>Pending</option></select>
             
             <button type="submit" class="btn" id="sBtn">Save Record</button>
@@ -45,10 +55,26 @@
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbwnMcpxRnSJ1ex1VDjkzELPNi6q9rWxotx0Dd3PVpguivv3J4xythe7TQPAUbahhHzyng/exec'; // <--- PUT NEW URL HERE
+        const scriptURL = ' https://script.google.com/macros/s/AKfycbwNSz1YEjBzU-SY7-KxxuM0kQ5gKoi0UnU2dbCPtcuw7cfdp3RVHeeeCkORqdLuiGCSLQ/exec'; 
         let mpcData = [];
 
-        // Global function that Google Script will call
+        function toggleBV() {
+            const logId = document.getElementById('log_id_input').value;
+            const bvInput = document.getElementById('bv_input');
+            const bvHint = document.getElementById('bv_hint');
+            
+            if (logId.trim() !== "") {
+                bvInput.disabled = false;
+                bvInput.placeholder = "e.g. 200";
+                bvHint.style.display = "none";
+            } else {
+                bvInput.disabled = true;
+                bvInput.value = "";
+                bvInput.placeholder = "Locked";
+                bvHint.style.display = "block";
+            }
+        }
+
         window.handleMPCData = function(data) {
             mpcData = data;
             const select = document.getElementById('mpc_select');
@@ -63,9 +89,9 @@
 
         function loadMPCs() {
             const select = document.getElementById('mpc_select');
-            select.innerHTML = '<option value="">Connecting to Sheet...</option>';
+            select.innerHTML = '<option value="">Connecting...</option>';
             const script = document.createElement('script');
-            script.src = scriptURL + "?action=getMPCs"; // Adding a param to avoid cache
+            script.src = scriptURL + "?callback=handleMPCData&t=" + new Date().getTime();
             document.body.appendChild(script);
         }
 
@@ -78,7 +104,6 @@
 
         window.onload = loadMPCs;
 
-        // SUBMIT LOGIC
         document.getElementById('appForm').addEventListener('submit', e => {
             e.preventDefault();
             const btn = document.getElementById('sBtn');
@@ -87,14 +112,14 @@
             
             fetch(scriptURL, { method: 'POST', body: new FormData(e.target)})
             .then(() => { 
-                alert("Data Sent Successfully!"); 
+                alert("Saved Successfully!"); 
                 e.target.reset(); 
+                toggleBV(); // Re-lock BV
                 btn.disabled = false; 
                 btn.innerText = "Save Record";
-                loadMPCs(); // Refresh list after save
             })
             .catch(() => { 
-                alert("Check your Google Sheet. It might have saved despite this error message."); 
+                alert("Record Saved (Syncing...)"); 
                 btn.disabled = false;
                 btn.innerText = "Save Record";
             });
