@@ -1,6 +1,164 @@
-<script>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeShop MPC Exclusive Access</title>
+    <style>
+        :root { --primary: #1a73e8; --gold: #D4AF37; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        h2 { color: var(--primary); text-align: center; margin-bottom: 20px; }
+        label { display: block; margin: 15px 0 5px; font-weight: bold; font-size: 14px; color: #333; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; }
+        .btn { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 8px; font-size: 18px; margin-top: 25px; cursor: pointer; font-weight: bold; }
+        
+        /* Congratulatory Popup */
+        #successModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        .modal-content { background: #fff; padding: 35px; border-radius: 25px; max-width: 400px; border-top: 12px solid var(--gold); }
+        .modal-content h1 { color: var(--gold); font-size: 28px; margin-bottom: 10px; }
+        .mpc-reveal { font-size: 32px; font-weight: bold; color: var(--primary); background: #f1f8ff; padding: 15px; border-radius: 12px; margin: 20px 0; border: 3px dashed var(--gold); letter-spacing: 2px; }
+        .close-btn { background: #333; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- Reveal Modal -->
+    <div id="successModal">
+        <div class="modal-content">
+            <h1>CONGRATULATIONS!</h1>
+            <p style="font-weight: bold; color: #555;">Registration Confirmed.</p>
+            <p>Your Assigned MPC Code is:</p>
+            <div class="mpc-reveal" id="finalCodeDisplay">----</div>
+            <p style="font-size: 12px; color: #888;">Note this code for future transactions.</p>
+            <button class="close-btn" onclick="closeModal()">Close & Refresh</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>SafeShop MPC Portal</h2>
+        
+        <form id="appForm">
+            <label>Guest (Applicant) Name *</label>
+            <input type="text" name="guest_name" id="gName" placeholder="Enter Full Name" required>
+
+            <label>Mobile Number *</label>
+            <input type="tel" name="mobile" id="gMobile" maxlength="10" placeholder="10 Digit Number" required>
+
+            <label>Select MPC Number</label>
+            <!-- Dropdown is NOT disabled, but we check registration on click -->
+            <select name="mpc_number" id="mpc_select" onmousedown="checkRegistration(event)" onchange="autoFetchCode()">
+                <option value="">-- View MPC Numbers --</option>
+            </select>
+
+            <!-- Hidden field to store MPC Code for spreadsheet -->
+            <input type="hidden" name="mpc_code" id="hidden_mpc_code">
+
+            <label>Leader Name</label><input type="text" name="leader">
+            <label>Upline Name</label><input type="text" name="upline">
+            <label>600 Paid?</label><select name="paid"><option value="">--</option><option>Yes</option><option>No</option></select>
+            <label>Date of Joining</label><input type="date" name="doj">
+            <label>City</label><input type="text" name="city">
+            <label>PAN Number</label><input type="text" name="pan" maxlength="10" style="text-transform:uppercase">
+            <label>Aadhar Number</label><input type="text" name="aadhar" maxlength="12">
+            
+            <label>Log ID</label>
+            <input type="text" name="log_id" id="log_id_input" placeholder="Enter ID to unlock BV" oninput="toggleBV()">
+            
+            <label>Sale (BV)</label>
+            <input type="number" name="bv" id="bv_input" disabled placeholder="Locked until Log ID entered">
+
+            <label>FIM Status</label><select name="fim"><option value="">--</option><option>Done</option><option>Pending</option></select>
+            
+            <button type="submit" class="btn" id="sBtn">Register & Reveal Code</button>
+        </form>
+    </div>
+
+    <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwonbJWX-vmmLmCmIDBncc9kcXPsPcgWsQL_-YuPTCzLQ0hMZEuOL7JtMwMf_uJQ87KmQ/exec';
+        let mpcData = [];
+
+        // 1. Intercept the dropdown click
+        function checkRegistration(event) {
+            const name = document.getElementById('gName').value;
+            const mobile = document.getElementById('gMobile').value;
+
+            if (name.trim() === "" || mobile.length < 10) {
+                event.preventDefault(); // Stop the dropdown from opening
+                alert("ACCESS DENIED: Please register with your Name and Mobile Number first to view MPC details.");
+                document.getElementById('gName').focus();
+            } else if (mpcData.length === 0) {
+                // If they are registered but data hasn't loaded yet
+                loadMPCs();
+            }
+        }
+
+        // 2. Fetch data from Google
+        window.handleMPCData = function(data) {
+            mpcData = data;
+            const select = document.getElementById('mpc_select');
+            select.innerHTML = '<option value="">-- Select MPC Number --</option>';
+            data.forEach(item => {
+                let opt = document.createElement('option');
+                opt.value = item.number;
+                opt.innerText = item.number;
+                select.appendChild(opt);
+            });
+        };
+
+        function loadMPCs() {
+            const script = document.createElement('script');
+            script.src = scriptURL + "?callback=handleMPCData&t=" + new Date().getTime();
+            document.body.appendChild(script);
+        }
+
+        function toggleBV() {
+            const logId = document.getElementById('log_id_input').value;
+            document.getElementById('bv_input').disabled = (logId.trim() === "");
+        }
+
+        // 3. Form Submission & Reveal
+        document.getElementById('appForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const btn = document.getElementById('sBtn');
+            const selectedNum = document.getElementById('mpc_select').value;
+            
+            if (!selectedNum) {
+                alert("Please select an MPC Number before submitting.");
+                return;
+            }
+
+            const found = mpcData.find(x => x.number === selectedNum);
+            const revealedCode = found ? found.code : "N/A";
+
+            // Prepare hidden code for sheet
+            document.getElementById('hidden_mpc_code').value = revealedCode;
+
+            btn.disabled = true;
+            btn.innerText = "Saving Data...";
+            
+            fetch(scriptURL, { method: 'POST', body: new FormData(e.target)})
+            .then(() => { 
+                document.getElementById('finalCodeDisplay').innerText = revealedCode;
+                document.getElementById('successModal').style.display = 'flex';
+                e.target.reset();
+                btn.disabled = false;
+                btn.innerText = "Register & Reveal Code";
+            })
+            .catch(() => alert("Submission failed. Check internet."));
+        });
+
+        function closeModal() {
+            document.getElementById('successModal').style.display = 'none';
+            location.reload(); // Refresh the app for next entry
+        }
+
+        // Pre-load if they start typing
+        document.getElementById('gName').onblur = loadMPCs;
+   <script>
     // 1. YOUR NEW URL HERE
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwtJTNBf7hx3dStmOZ-zLnRa3zdn5h3QyzqeR2rzEIta_TJgzNiZqcZGj8mnTKw4p9T/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwonbJWX-vmmLmCmIDBncc9kcXPsPcgWsQL_-YuPTCzLQ0hMZEuOL7JtMwMf_uJQ87KmQ/exec';
     let mpcData = [];
 
     // 2. THIS FUNCTION RECEIVES THE DATA FROM GOOGLE
@@ -44,3 +202,5 @@
 
     // Rest of your Logic (toggleBV, checkRegistration, etc.) remains same...
 </script>
+</body>
+</html>
