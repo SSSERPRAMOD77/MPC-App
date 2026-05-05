@@ -2,77 +2,184 @@
 <html>
 <head>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
-    .container { max-width: 500px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: auto; }
-    h2 { color: #2c3e50; text-align: center; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 500px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    h2 { color: #1a73e8; text-align: center; margin-bottom: 25px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+    
     .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; }
-    input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-    input[readonly] { background: #eee; }
-    button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; }
-    button:hover { background: #219150; }
-    .popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.3); z-index: 100; text-align: center; }
+    label { display: block; margin-bottom: 5px; font-weight: 600; color: #444; font-size: 14px; }
+    
+    input, select { 
+      width: 100%; 
+      padding: 12px; 
+      border: 1.5px solid #ddd; 
+      border-radius: 8px; 
+      box-sizing: border-box; 
+      font-size: 15px;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus, select:focus { border-color: #1a73e8; outline: none; }
+    input[readonly] { background-color: #f8f9fa; cursor: not-allowed; color: #555; font-weight: bold; }
+    
+    button { 
+      width: 100%; 
+      padding: 14px; 
+      background-color: #1a73e8; 
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-size: 16px; 
+      font-weight: bold;
+      margin-top: 20px;
+      transition: background 0.3s;
+    }
+    
+    button:hover { background-color: #1557b0; }
+    button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+    /* POPUP STYLING */
+    .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
+    .popup { 
+      display: none; 
+      position: fixed; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%); 
+      background: white; 
+      padding: 30px; 
+      border-radius: 12px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+      z-index: 100; 
+      text-align: center; 
+      width: 80%; 
+      max-width: 350px;
+    }
+    .popup h3 { margin-top: 0; color: #1a73e8; }
+    .popup p { color: #555; line-height: 1.5; }
+    .close-btn { background: #34a853; margin-top: 15px; }
   </style>
 </head>
 <body>
+
   <div class="container">
-    <h2>MPC Record Entry</h2>
+    <h2>Safeshop MPC Entry</h2>
+    
     <div class="form-group">
       <label>MPC Number</label>
       <select id="mpcNo" onchange="fetchCode()">
-        <option value="">Select MPC Number</option>
-        <option value="101">101</option> <!-- Add your numbers here -->
-        <option value="102">102</option>
+        <option value="">Loading Numbers...</option>
       </select>
     </div>
+
     <div class="form-group">
-      <label>MPC Code (Auto)</label>
-      <input type="text" id="mpcCode" readonly>
+      <label>MPC Code (Auto-Fetched)</label>
+      <input type="text" id="mpcCode" placeholder="Select MPC No first" readonly>
     </div>
-    <div id="otherDetails">
-      <input type="text" id="issuedTo" placeholder="Leader Name" class="form-group">
-      <input type="text" id="upline" placeholder="Upline Name" class="form-group">
-      <input type="text" id="guest" placeholder="Guest Name" class="form-group">
-      <input type="number" id="saleBv" placeholder="Sale (BV)" class="form-group">
-      <input type="date" id="doj" class="form-group">
-      <input type="text" id="aadhar" placeholder="Aadhar Number" class="form-group">
-      <input type="text" id="pan" placeholder="PAN Number" class="form-group">
-      <button onclick="submitData()">Submit Record</button>
+
+    <div class="form-group">
+      <label>Issued To (Leader)</label>
+      <input type="text" id="issuedTo" placeholder="Enter Leader Name">
     </div>
+
+    <div class="form-group">
+      <label>Upline</label>
+      <input type="text" id="upline" placeholder="Enter Upline Name">
+    </div>
+
+    <div class="form-group">
+      <label>Guest (Applicant)</label>
+      <input type="text" id="guest" placeholder="Enter Guest Name">
+    </div>
+
+    <div class="form-group">
+      <label>Sale (in BV)</label>
+      <input type="number" id="saleBv" placeholder="Enter BV Amount">
+    </div>
+
+    <div class="form-group">
+      <label>Aadhar Number</label>
+      <input type="text" id="aadhar" placeholder="12 Digit Aadhar">
+    </div>
+
+    <div class="form-group">
+      <label>PAN Number</label>
+      <input type="text" id="pan" placeholder="10 Digit PAN">
+    </div>
+
+    <button id="submitBtn" onclick="submitData()">Submit Record</button>
   </div>
 
+  <!-- Success/Error Popups -->
+  <div id="overlay" class="overlay"></div>
   <div id="msgPopup" class="popup">
     <h3 id="popTitle"></h3>
     <p id="popText"></p>
-    <button onclick="closePopup()">OK</button>
+    <button class="close-btn" onclick="closePopup()">Close & Refresh</button>
   </div>
 
   <script>
+    // 1. Fetch the list from Spreadsheet when page loads
+    window.onload = function() {
+      google.script.run.withSuccessHandler(function(list) {
+        var select = document.getElementById('mpcNo');
+        select.innerHTML = '<option value="">-- Select MPC Number --</option>';
+        list.forEach(function(item) {
+          var option = document.createElement('option');
+          option.value = item;
+          option.text = item;
+          select.appendChild(option);
+        });
+      }).getMpcList();
+    };
+
+    // 2. Automatically get the code when MPC Number is chosen
     function fetchCode() {
       var mpcNo = document.getElementById('mpcNo').value;
+      if(!mpcNo) {
+        document.getElementById('mpcCode').value = "";
+        return;
+      }
+      
       google.script.run.withSuccessHandler(function(code) {
         document.getElementById('mpcCode').value = code;
       }).getMpcCode(mpcNo);
     }
 
+    // 3. Submit the form
     function submitData() {
+      var btn = document.getElementById("submitBtn");
+      var mpcNo = document.getElementById('mpcNo').value;
+
+      if(!mpcNo) {
+        alert("Please select an MPC Number first!");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "Processing...";
+
       var data = {
-        mpcNo: document.getElementById('mpcNo').value,
+        mpcNo: mpcNo,
         mpcCode: document.getElementById('mpcCode').value,
         issuedTo: document.getElementById('issuedTo').value,
         upline: document.getElementById('upline').value,
         guest: document.getElementById('guest').value,
         saleBv: document.getElementById('saleBv').value,
-        doj: document.getElementById('doj').value,
         aadhar: document.getElementById('aadhar').value,
-        pan: document.getElementById('pan').value
+        pan: document.getElementById('pan').value,
+        amountPaid: "600", // Fixed amount as per requirements
+        fimDone: "Pending"
       };
 
       google.script.run.withSuccessHandler(function(res) {
         if (res.status === "exists") {
-          showPopup("Already Saved", "This MPC is already linked to " + res.guest);
+          showPopup("Record Already Exists", "Warning: MPC " + data.mpcNo + " has already been used for " + res.guest + ".");
+          btn.disabled = false;
+          btn.innerText = "Submit Record";
         } else {
-          showPopup("Congratulations!", "Record saved! MPC Code: " + res.code);
+          showPopup("Congratulations!", "Success! The data for " + data.guest + " is saved.\n\nMPC Code: " + res.code);
         }
       }).submitRecord(data);
     }
@@ -80,13 +187,16 @@
     function showPopup(title, text) {
       document.getElementById('popTitle').innerText = title;
       document.getElementById('popText').innerText = text;
+      document.getElementById('overlay').style.display = 'block';
       document.getElementById('msgPopup').style.display = 'block';
     }
 
     function closePopup() {
+      document.getElementById('overlay').style.display = 'none';
       document.getElementById('msgPopup').style.display = 'none';
-      location.reload();
+      location.reload(); // Resets form for next entry
     }
   </script>
+
 </body>
 </html>
