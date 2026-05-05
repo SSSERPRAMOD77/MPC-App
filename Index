@@ -1,4 +1,4 @@
-I<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
   <style>
@@ -8,9 +8,8 @@ I<!DOCTYPE html>
     .input-box { margin-bottom: 15px; }
     label { font-weight: bold; font-size: 13px; color: #555; display: block; margin-bottom: 5px; }
     input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-    input[readonly] { background: #f9f9f9; color: #d35400; font-weight: bold; border: 1px solid #d35400; }
-    button { width: 100%; padding: 15px; background: #2980b9; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: 0.3s; }
-    button:hover { background: #1f6391; }
+    input[readonly] { background: #fff5f0; color: #d35400; font-weight: bold; border: 1px solid #ff7f50; }
+    button { width: 100%; padding: 15px; background: #2980b9; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
     .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.3); z-index: 10; text-align: center; width: 80%; max-width: 300px; }
     .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 5; }
   </style>
@@ -18,88 +17,46 @@ I<!DOCTYPE html>
 <body>
   <div class="card">
     <h2>MPC Record Manager</h2>
-    
     <div class="input-box">
       <label>Select MPC Number</label>
-      <select id="mpcNo" onchange="fetchCode()">
-        <option value="">Fetching from Sheet...</option>
-      </select>
+      <select id="mpcNo" onchange="fetchCode()"><option>Loading...</option></select>
     </div>
-
-    <div class="input-box">
-      <label>MPC Code (Auto)</label>
-      <input type="text" id="mpcCode" readonly placeholder="Auto-filled">
-    </div>
-
-    <div class="input-box"><label>Issued To (Leader)</label><input type="text" id="leader"></div>
+    <div class="input-box"><label>MPC Code (Auto)</label><input type="text" id="mpcCode" readonly></div>
+    <div class="input-box"><label>Leader Name</label><input type="text" id="leader"></div>
     <div class="input-box"><label>Upline</label><input type="text" id="upline"></div>
-    <div class="input-box"><label>Guest (Applicant)</label><input type="text" id="guest"></div>
+    <div class="input-box"><label>Guest Name</label><input type="text" id="guest"></div>
     <div class="input-box"><label>Sale (BV)</label><input type="number" id="bv"></div>
     <div class="input-box"><label>Aadhar Number</label><input type="text" id="aadhar"></div>
     <div class="input-box"><label>PAN Number</label><input type="text" id="pan"></div>
-
     <button onclick="saveData()">Submit Record</button>
   </div>
-
   <div id="overlay" class="overlay"></div>
-  <div id="modal" class="modal">
-    <h3 id="mTitle"></h3>
-    <p id="mBody"></p>
-    <button style="background:#27ae60" onclick="resetForm()">OK</button>
-  </div>
-
+  <div id="modal" class="modal"><h3 id="mTitle"></h3><p id="mBody"></p><button onclick="location.reload()">OK</button></div>
   <script>
-    // Pulls data on startup
     window.onload = function() {
       google.script.run.withSuccessHandler(function(list) {
-        var dropdown = document.getElementById('mpcNo');
-        dropdown.innerHTML = '<option value="">-- Choose Number --</option>';
-        list.forEach(function(item) {
-          var opt = document.createElement('option');
-          opt.value = opt.text = item;
-          dropdown.appendChild(opt);
-        });
+        var d = document.getElementById('mpcNo');
+        d.innerHTML = '<option value="">-- Select --</option>';
+        list.forEach(function(i) { var o = document.createElement('option'); o.value = o.text = i; d.appendChild(o); });
       }).getMpcList();
     };
-
     function fetchCode() {
-      var num = document.getElementById('mpcNo').value;
-      if(!num) return;
-      google.script.run.withSuccessHandler(function(code) {
-        document.getElementById('mpcCode').value = code;
-      }).getMpcCode(num);
+      google.script.run.withSuccessHandler(function(c) { document.getElementById('mpcCode').value = c; })
+      .getMpcCode(document.getElementById('mpcNo').value);
     }
-
     function saveData() {
-      var data = {
-        mpcNo: document.getElementById('mpcNo').value,
-        mpcCode: document.getElementById('mpcCode').value,
-        issuedTo: document.getElementById('leader').value,
-        upline: document.getElementById('upline').value,
-        guest: document.getElementById('guest').value,
-        saleBv: document.getElementById('bv').value,
-        aadhar: document.getElementById('aadhar').value,
-        pan: document.getElementById('pan').value
+      var d = {
+        mpcNo: document.getElementById('mpcNo').value, mpcCode: document.getElementById('mpcCode').value,
+        issuedTo: document.getElementById('leader').value, upline: document.getElementById('upline').value,
+        guest: document.getElementById('guest').value, saleBv: document.getElementById('bv').value,
+        aadhar: document.getElementById('aadhar').value, pan: document.getElementById('pan').value
       };
-
       google.script.run.withSuccessHandler(function(res) {
-        if(res.status === "exists") {
-          showModal("Entry Found", "This MPC is already used by " + res.guest);
-        } else {
-          showModal("Congratulations!", "Success! The MPC Code is: " + res.code);
-        }
-      }).submitRecord(data);
-    }
-
-    function showModal(t, b) {
-      document.getElementById('mTitle').innerText = t;
-      document.getElementById('mBody').innerText = b;
-      document.getElementById('overlay').style.display = 'block';
-      document.getElementById('modal').style.display = 'block';
-    }
-
-    function resetForm() {
-      location.reload();
+        var m = document.getElementById('modal'); var o = document.getElementById('overlay');
+        document.getElementById('mTitle').innerText = res.status === "exists" ? "Already Saved" : "Congratulations!";
+        document.getElementById('mBody').innerText = res.status === "exists" ? "Used by " + res.guest : "MPC Code: " + res.code;
+        m.style.display = o.style.display = 'block';
+      }).submitRecord(d);
     }
   </script>
 </body>
