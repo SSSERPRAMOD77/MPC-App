@@ -2,201 +2,105 @@
 <html>
 <head>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
-    .container { width: 100%; max-width: 500px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-    h2 { color: #1a73e8; text-align: center; margin-bottom: 25px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
-    
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: 600; color: #444; font-size: 14px; }
-    
-    input, select { 
-      width: 100%; 
-      padding: 12px; 
-      border: 1.5px solid #ddd; 
-      border-radius: 8px; 
-      box-sizing: border-box; 
-      font-size: 15px;
-      transition: border-color 0.3s;
-    }
-    
-    input:focus, select:focus { border-color: #1a73e8; outline: none; }
-    input[readonly] { background-color: #f8f9fa; cursor: not-allowed; color: #555; font-weight: bold; }
-    
-    button { 
-      width: 100%; 
-      padding: 14px; 
-      background-color: #1a73e8; 
-      color: white; 
-      border: none; 
-      border-radius: 8px; 
-      cursor: pointer; 
-      font-size: 16px; 
-      font-weight: bold;
-      margin-top: 20px;
-      transition: background 0.3s;
-    }
-    
-    button:hover { background-color: #1557b0; }
-    button:disabled { background-color: #ccc; cursor: not-allowed; }
-
-    /* POPUP STYLING */
-    .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
-    .popup { 
-      display: none; 
-      position: fixed; 
-      top: 50%; 
-      left: 50%; 
-      transform: translate(-50%, -50%); 
-      background: white; 
-      padding: 30px; 
-      border-radius: 12px; 
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
-      z-index: 100; 
-      text-align: center; 
-      width: 80%; 
-      max-width: 350px;
-    }
-    .popup h3 { margin-top: 0; color: #1a73e8; }
-    .popup p { color: #555; line-height: 1.5; }
-    .close-btn { background: #34a853; margin-top: 15px; }
+    body { font-family: 'Segoe UI', sans-serif; background: #eef2f3; display: flex; justify-content: center; padding: 10px; }
+    .card { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+    .input-box { margin-bottom: 15px; }
+    label { font-weight: bold; font-size: 13px; color: #555; display: block; margin-bottom: 5px; }
+    input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    input[readonly] { background: #f9f9f9; color: #d35400; font-weight: bold; border: 1px solid #d35400; }
+    button { width: 100%; padding: 15px; background: #2980b9; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: 0.3s; }
+    button:hover { background: #1f6391; }
+    .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.3); z-index: 10; text-align: center; width: 80%; max-width: 300px; }
+    .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 5; }
   </style>
 </head>
 <body>
-
-  <div class="container">
-    <h2>Safeshop MPC Entry</h2>
+  <div class="card">
+    <h2>MPC Record Manager</h2>
     
-    <div class="form-group">
-      <label>MPC Number</label>
+    <div class="input-box">
+      <label>Select MPC Number</label>
       <select id="mpcNo" onchange="fetchCode()">
-        <option value="">Loading Numbers...</option>
+        <option value="">Fetching from Sheet...</option>
       </select>
     </div>
 
-    <div class="form-group">
-      <label>MPC Code (Auto-Fetched)</label>
-      <input type="text" id="mpcCode" placeholder="Select MPC No first" readonly>
+    <div class="input-box">
+      <label>MPC Code (Auto)</label>
+      <input type="text" id="mpcCode" readonly placeholder="Auto-filled">
     </div>
 
-    <div class="form-group">
-      <label>Issued To (Leader)</label>
-      <input type="text" id="issuedTo" placeholder="Enter Leader Name">
-    </div>
+    <div class="input-box"><label>Issued To (Leader)</label><input type="text" id="leader"></div>
+    <div class="input-box"><label>Upline</label><input type="text" id="upline"></div>
+    <div class="input-box"><label>Guest (Applicant)</label><input type="text" id="guest"></div>
+    <div class="input-box"><label>Sale (BV)</label><input type="number" id="bv"></div>
+    <div class="input-box"><label>Aadhar Number</label><input type="text" id="aadhar"></div>
+    <div class="input-box"><label>PAN Number</label><input type="text" id="pan"></div>
 
-    <div class="form-group">
-      <label>Upline</label>
-      <input type="text" id="upline" placeholder="Enter Upline Name">
-    </div>
-
-    <div class="form-group">
-      <label>Guest (Applicant)</label>
-      <input type="text" id="guest" placeholder="Enter Guest Name">
-    </div>
-
-    <div class="form-group">
-      <label>Sale (in BV)</label>
-      <input type="number" id="saleBv" placeholder="Enter BV Amount">
-    </div>
-
-    <div class="form-group">
-      <label>Aadhar Number</label>
-      <input type="text" id="aadhar" placeholder="12 Digit Aadhar">
-    </div>
-
-    <div class="form-group">
-      <label>PAN Number</label>
-      <input type="text" id="pan" placeholder="10 Digit PAN">
-    </div>
-
-    <button id="submitBtn" onclick="submitData()">Submit Record</button>
+    <button onclick="saveData()">Submit Record</button>
   </div>
 
-  <!-- Success/Error Popups -->
   <div id="overlay" class="overlay"></div>
-  <div id="msgPopup" class="popup">
-    <h3 id="popTitle"></h3>
-    <p id="popText"></p>
-    <button class="close-btn" onclick="closePopup()">Close & Refresh</button>
+  <div id="modal" class="modal">
+    <h3 id="mTitle"></h3>
+    <p id="mBody"></p>
+    <button style="background:#27ae60" onclick="resetForm()">OK</button>
   </div>
 
   <script>
-    // 1. Fetch the list from Spreadsheet when page loads
+    // Pulls data on startup
     window.onload = function() {
       google.script.run.withSuccessHandler(function(list) {
-        var select = document.getElementById('mpcNo');
-        select.innerHTML = '<option value="">-- Select MPC Number --</option>';
+        var dropdown = document.getElementById('mpcNo');
+        dropdown.innerHTML = '<option value="">-- Choose Number --</option>';
         list.forEach(function(item) {
-          var option = document.createElement('option');
-          option.value = item;
-          option.text = item;
-          select.appendChild(option);
+          var opt = document.createElement('option');
+          opt.value = opt.text = item;
+          dropdown.appendChild(opt);
         });
       }).getMpcList();
     };
 
-    // 2. Automatically get the code when MPC Number is chosen
     function fetchCode() {
-      var mpcNo = document.getElementById('mpcNo').value;
-      if(!mpcNo) {
-        document.getElementById('mpcCode').value = "";
-        return;
-      }
-      
+      var num = document.getElementById('mpcNo').value;
+      if(!num) return;
       google.script.run.withSuccessHandler(function(code) {
         document.getElementById('mpcCode').value = code;
-      }).getMpcCode(mpcNo);
+      }).getMpcCode(num);
     }
 
-    // 3. Submit the form
-    function submitData() {
-      var btn = document.getElementById("submitBtn");
-      var mpcNo = document.getElementById('mpcNo').value;
-
-      if(!mpcNo) {
-        alert("Please select an MPC Number first!");
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerText = "Processing...";
-
+    function saveData() {
       var data = {
-        mpcNo: mpcNo,
+        mpcNo: document.getElementById('mpcNo').value,
         mpcCode: document.getElementById('mpcCode').value,
-        issuedTo: document.getElementById('issuedTo').value,
+        issuedTo: document.getElementById('leader').value,
         upline: document.getElementById('upline').value,
         guest: document.getElementById('guest').value,
-        saleBv: document.getElementById('saleBv').value,
+        saleBv: document.getElementById('bv').value,
         aadhar: document.getElementById('aadhar').value,
-        pan: document.getElementById('pan').value,
-        amountPaid: "600", // Fixed amount as per requirements
-        fimDone: "Pending"
+        pan: document.getElementById('pan').value
       };
 
       google.script.run.withSuccessHandler(function(res) {
-        if (res.status === "exists") {
-          showPopup("Record Already Exists", "Warning: MPC " + data.mpcNo + " has already been used for " + res.guest + ".");
-          btn.disabled = false;
-          btn.innerText = "Submit Record";
+        if(res.status === "exists") {
+          showModal("Entry Found", "This MPC is already used by " + res.guest);
         } else {
-          showPopup("Congratulations!", "Success! The data for " + data.guest + " is saved.\n\nMPC Code: " + res.code);
+          showModal("Congratulations!", "Success! The MPC Code is: " + res.code);
         }
       }).submitRecord(data);
     }
 
-    function showPopup(title, text) {
-      document.getElementById('popTitle').innerText = title;
-      document.getElementById('popText').innerText = text;
+    function showModal(t, b) {
+      document.getElementById('mTitle').innerText = t;
+      document.getElementById('mBody').innerText = b;
       document.getElementById('overlay').style.display = 'block';
-      document.getElementById('msgPopup').style.display = 'block';
+      document.getElementById('modal').style.display = 'block';
     }
 
-    function closePopup() {
-      document.getElementById('overlay').style.display = 'none';
-      document.getElementById('msgPopup').style.display = 'none';
-      location.reload(); // Resets form for next entry
+    function resetForm() {
+      location.reload();
     }
   </script>
-
 </body>
 </html>
