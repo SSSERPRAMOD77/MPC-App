@@ -100,7 +100,7 @@
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxSrfLeAMnbXdyEkUJT4TUR263dgV1rs8KsYTT911t_7BAZqYOCtzPtNKds7feDOozQdA/exec'; // PASTE YOUR LATEST DEPLOYMENT URL HERE
+        const scriptURL = '1W-7kl6X4xI3sV3gpWoOsIlyn-Jzlc7GWBdpNXdArWaA'; // PASTE YOUR LATEST DEPLOYMENT URL HERE
         let mpcData = [];
 
         // Intercept dropdown click if mandatory details are missing
